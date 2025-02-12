@@ -23,19 +23,19 @@ class Dashboard(QMainWindow, FormClass):
     def configure_permissions(self):
         if self.role == "Assistant":
             self.Disease_btn.hide()
+    
+        if self.role == "Doctor":
+            self.tabWidget_2.removeTab(0)
 
     def logout(self):
         self.close()
-        from main import MainApp
-        self.login_window = MainApp() 
+        from main import LoginWindow 
+        self.login_window = LoginWindow () 
         self.login_window.show()
-
-
-
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = Dashboard("Assistant")
+    window = Dashboard("Doctor")
     window.show()
     sys.exit(app.exec_())
