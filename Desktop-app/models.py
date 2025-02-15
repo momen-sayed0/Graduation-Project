@@ -14,9 +14,10 @@ class Users(BaseModel):
 
 # Patients table definition
 class Patients(BaseModel):
+    id = AutoField()
     name = CharField(max_length=50)
     date_of_birth = DateField()
-    gender = CharField(choices=['Male', 'Female', 'Other'])
+    gender = CharField(max_length=10)
     phone = CharField(max_length=15)
     address = TextField()
     created_at = DateTimeField(constraints=[SQL('DEFAULT CURRENT_TIMESTAMP')])

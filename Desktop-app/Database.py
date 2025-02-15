@@ -1,4 +1,9 @@
 from peewee import MySQLDatabase
+import logging
+
+# إعداد نظام تسجيل الأخطاء
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Setting up a database connection
 db = MySQLDatabase(
@@ -6,11 +11,12 @@ db = MySQLDatabase(
     user='root',
     password='root',
     host='localhost',
-    port=3306
+    port=3306,
 )
 
 try:
     db.connect()
-    print(" successful connection to the database")
+    logger.info(" successful connection to the database")
 except Exception as e:
-    print(f"failed to connect to the database: {e}")
+    logger.error(f"failed to connect to the database: {e}")
+    db.close()

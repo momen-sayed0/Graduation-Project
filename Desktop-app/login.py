@@ -45,10 +45,18 @@ class LoginWindow(QWidget, FormClass):
         icon_path_user = os.path.join(os.path.dirname(__file__), "icons/user.png")
         icon_path_pass = os.path.join(os.path.dirname(__file__), "icons/password.png")
 
-        username_icon = QPixmap(icon_path_user).scaled(18, 18, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        username_action = self.lineEdit_username.addAction(QIcon(username_icon), QLineEdit.LeadingPosition)
-        password_icon = QPixmap(icon_path_pass).scaled(18, 18, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        password_action = self.lineEdit_password.addAction(QIcon(password_icon), QLineEdit.LeadingPosition)
+        if not os.path.exists(icon_path_user):
+            print("Error: User icon file not found!")
+        if not os.path.exists(icon_path_pass):
+            print("Error: Password icon file not found!")
+
+        username_icon = QIcon(icon_path_user)
+        password_icon = QIcon(icon_path_pass)
+
+        if not username_icon.isNull():
+            self.lineEdit_username.addAction(username_icon, QLineEdit.LeadingPosition)
+        if not password_icon.isNull():
+            self.lineEdit_password.addAction(password_icon, QLineEdit.LeadingPosition)
 
     #========== toggle password visibility ==========#
     def toggle_password_visibility(self):
