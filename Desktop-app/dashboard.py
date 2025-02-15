@@ -12,6 +12,7 @@ class Dashboard(QMainWindow, FormClass):
         self.setupUi(self)
         self.role = role
 
+        self.setWindowTitle("Dashboard - Clinic Management System")
         self.stackedWidget.setCurrentIndex(0) 
         self.patient_btn.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
         self.Disease_btn.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))

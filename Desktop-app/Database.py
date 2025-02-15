@@ -5,6 +5,12 @@ db = MySQLDatabase(
     'dbapp',
     user='root',
     password='root',
-    host='127.0.0.1',
+    host='localhost',
     port=3306
 )
+
+try:
+    db.connect()
+    print(" successful connection to the database")
+except Exception as e:
+    print(f"failed to connect to the database: {e}")

@@ -1,14 +1,15 @@
 import os
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
+from PyQt5.QtGui import *
 from PyQt5.uic import loadUiType
 from auth import verify_user
-from dashboard import Dashboard 
+from dashboard import Dashboard
 
-#======== load login.ui file=========#
+#======== load login.ui file =========#
 FormClass, _ = loadUiType(os.path.join(os.path.dirname(__file__), 'login.ui'))
 
-#========== LoginWindow class==========#
+#========== LoginWindow class ==========#
 class LoginWindow(QWidget, FormClass):
     def __init__(self, parent=None):
         super(LoginWindow, self).__init__(parent)
@@ -16,49 +17,122 @@ class LoginWindow(QWidget, FormClass):
         self.Handle_Ui()
         self.Handle_buttons()
 
-    #========== handle ui==========#  
+    #========== handle ui ==========#  
     def Handle_Ui(self):
         self.setWindowTitle("Login - Clinic Management System")
+        self.setup_password_field()
+        self.setup_validators()
+        self.setup_icons()  
 
-        #========== hide password==========#
-        self.lineEdit_password.setEchoMode(QLineEdit.Password)
-
-    #========== handle buttons==========#
+        #========== set default role to Doctor ==========#
+        self.radioButton_doctor.setChecked(True)
+   
+    #========== handle buttons ==========#
     def Handle_buttons(self):
-        #========== login button==========#
         self.pushButton_login.clicked.connect(self.login)
+        self.togglePasswordButton.clicked.connect(self.toggle_password_visibility)
+        #========== clear errors when typing ==========#
+        self.lineEdit_username.textChanged.connect(self.clear_username_error)
+        self.lineEdit_password.textChanged.connect(self.clear_password_error)
+    
+    #========== setup password field with toggle button ==========#
+    def setup_password_field(self):
+        self.lineEdit_password.setEchoMode(QLineEdit.Password)
+        self.togglePasswordButton.setIcon(QIcon(os.path.join(os.path.dirname(__file__), "icons/eye_closed.png")))
 
-    #========== login function==========#
-    def login(self):
-        #========== get username and password==========#
+    #========== setup icons inside QLineEdit ==========#
+    def setup_icons(self):
+        icon_path_user = os.path.join(os.path.dirname(__file__), "icons/user.png")
+        icon_path_pass = os.path.join(os.path.dirname(__file__), "icons/password.png")
+
+        username_icon = QPixmap(icon_path_user).scaled(18, 18, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        username_action = self.lineEdit_username.addAction(QIcon(username_icon), QLineEdit.LeadingPosition)
+        password_icon = QPixmap(icon_path_pass).scaled(18, 18, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        password_action = self.lineEdit_password.addAction(QIcon(password_icon), QLineEdit.LeadingPosition)
+
+    #========== toggle password visibility ==========#
+    def toggle_password_visibility(self):
+        if self.lineEdit_password.echoMode() == QLineEdit.Password:
+            self.lineEdit_password.setEchoMode(QLineEdit.Normal)
+            self.togglePasswordButton.setIcon(QIcon(os.path.join(os.path.dirname(__file__), "icons/eye_open.png")))
+        else:
+            self.lineEdit_password.setEchoMode(QLineEdit.Password)
+            self.togglePasswordButton.setIcon(QIcon(os.path.join(os.path.dirname(__file__), "icons/eye_closed.png")))
+    
+    #========== setup input validators ==========#
+    def setup_validators(self):
+        username_validator = QRegularExpressionValidator(QRegularExpression("^[A-Za-z0-9_]+$"))
+        self.lineEdit_username.setValidator(username_validator)
+        
+        password_validator = QRegularExpressionValidator(QRegularExpression("^\\S+$"))
+        self.lineEdit_password.setValidator(password_validator)
+
+    #========== validate inputs ==========#
+    def validate_inputs(self):
         username = self.lineEdit_username.text().strip()
         password = self.lineEdit_password.text().strip()
+        self.clear_errors()
+        has_error = False
 
-        #========== get role (Doc OR Assist)==========#
-        if self.radioButton_doctor.isChecked():
-            role = "Doctor"
-        elif self.radioButton_assistant.isChecked():
-            role = "Assistant"
-        else:
-            role = None
+        #========== check username ==========#
+        if not username:
+            self.label_usernameError.setText("Username cannot be empty")
+            self.lineEdit_username.setStyleSheet("border: 2px solid red;")
+            has_error = True
 
-        #========== check if username and password are empty==========#
-        if not username or not password:
-            QMessageBox.warning(self, "Input Error", "Please enter username and password")
-            return
-        
-       #========== verify user==========#
+        #========== check password ==========#
+        if not password:
+            self.label_passwordError.setText("Password cannot be empty")
+            self.lineEdit_password.setStyleSheet("border: 2px solid red;")
+            has_error = True
+        elif " " in password:
+            self.label_passwordError.setText("Password cannot contain spaces")
+            self.lineEdit_password.setStyleSheet("border: 2px solid red;")
+            has_error = True
+
+        return not has_error  # return True if no errors
+
+    #========== login function ==========#
+    def login(self):
+        username = self.lineEdit_username.text().strip()
+        password = self.lineEdit_password.text().strip()
+        role = "Doctor" if self.radioButton_doctor.isChecked() else "Assistant"
+
+        if not self.validate_inputs():
+            return  # stop the function if there are errors
+
         if verify_user(username, password, role):
             QMessageBox.information(self, "Login Success", f"Welcome Ya {role}😎 !")
-            #========== open dashboard==========#
-            self.dashboard = Dashboard(role)
-            self.dashboard.show()
-            self.close()  # close login window
+            self.open_dashboard(role)
         else:
-            QMessageBox.warning(self, "Login Failed", "Invalid username or password.")
+            self.show_login_error()
 
-        #========== clear inputs==========#
-        self.lineEdit_username.clear()
-        self.lineEdit_password.clear()
-        self.radioButton_doctor.setChecked(True)
-        self.lineEdit_username.setFocus()
+    #========== open dashboard window ==========#
+    def open_dashboard(self, role):
+        if hasattr(self, 'dashboard') and self.dashboard is not None:
+            self.dashboard.close()
+        self.dashboard = Dashboard(role)
+        self.dashboard.show()
+        self.close()  # close login window
+
+    #========== show login error messages ==========#
+    def show_login_error(self):
+        self.label_passwordError.setText("Invalid password")
+        self.label_usernameError.setText("Invalid username")
+        self.lineEdit_username.setStyleSheet("border: 2px solid red;")
+        self.lineEdit_password.setStyleSheet("border: 2px solid red;")
+        
+    #========== clear errors ==========#
+    def clear_errors(self):
+        self.label_usernameError.setText("")
+        self.label_passwordError.setText("")
+        self.lineEdit_username.setStyleSheet("")
+        self.lineEdit_password.setStyleSheet("")
+
+    def clear_username_error(self):
+        self.label_usernameError.setText("")
+        self.lineEdit_username.setStyleSheet("")
+
+    def clear_password_error(self):
+        self.label_passwordError.setText("")
+        self.lineEdit_password.setStyleSheet("")
